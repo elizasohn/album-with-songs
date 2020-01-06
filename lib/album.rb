@@ -18,7 +18,8 @@ class Album
   end
 
   def self.search(x)
-    @@albums.values().select {|e| /#{x}/i.match? e.name}
+    albums = Album.all
+    albums.select {|e| /#{x}/i.match? e.name}
   end
 
   def save
@@ -51,7 +52,8 @@ class Album
   end
 
   def self.sort()
-    @@albums.values().sort { |a, b| a.name <=> b.name }
+    albums = Album.all
+    albums.sort { |a, b| a.name <=> b.name }
     # @@albums.values()
   end
 
