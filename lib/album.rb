@@ -1,21 +1,20 @@
 class Album
-  attr_reader :id, :name, :year, :genre, :artist ##CHANGE#Our new save method will need reader methods.
-  # attr_accessor :name
+  attr_accessor :name, :id
 
-  @@albums = {}
-  # @@sold_albums = {}
-  @@total_rows = 0 # We've added a class variable to keep track of total rows and increment the value when an ALbum is added.
-
-  def initialize(name, id, year, genre, artist) ##CHANGE # We've added id as a second parameter.
-    @name = name
-    @id = id || @@total_rows += 1  # We've added code to handle the id.
-    @year = year
-    @genre = genre
-    @artist = artist
+  def initialize(attributes) ##CHANGE # We've added id as a second parameter.
+    @name = attributes.fetch(:name)
+    @id = attributes.fetch(:id)
   end
 
   def self.all
-    @@albums.values()
+    returned_albums = DB.exec('SELECT * FROM albums;')
+    albums = []
+    returned_albums.each() do |album|
+      name = album.fetch('name')
+      id = album.fetch('id').to_i
+      albums.push(Album.new({:name => name, :id => id}))
+    end
+    albums
   end
 
   def self.search(x)
@@ -23,7 +22,8 @@ class Album
   end
 
   def save
-    @@albums[self.id] = Album.new(self.name, self.id, "", "", "") #CHANGE
+    result = DB.exec("INSERT INTO albums (name) VALUES ('#{@name}') RETURNING id;")
+    @id = result.first().fetch("id").to_i
   end
 
   def ==(album_to_compare)
@@ -31,23 +31,23 @@ class Album
   end
 
   def self.clear
-    @@albums = {}
-    @@total_rows = 0
+    DB.exec("DELETE FROM albums *;")
   end
 
   def self.find(id)
-    @@albums[id]
+    album = DB.exec("SELECT * FROM albums WHERE id = #{id};").first
+    name = album.fetch("name")
+    id = album.fetch("id").to_i
+    Album.new({:name => name, :id => id})
   end
 
-  def update(name, year, genre, artist) #CHANGE
-    @name = (name != '') ? name : @name
-    @year = (year != '') ? year : @year
-    @genre = (genre != '') ? genre : @genre
-    @artist = (artist != '') ? artist : @artist
+  def update(name)
+    @name = name
+    DB.exec("UPDATE albums SET name = '#{@name}' WHERE id = #{@id}")
   end
 
   def delete
-    @@albums.delete(self.id)
+    DB.exec("DELETE FROM albums WHERE id = #{@id};")
   end
 
   def self.sort()
