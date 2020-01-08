@@ -1,6 +1,7 @@
 require('sinatra')
 require('sinatra/reloader')
 require('./lib/album')
+require('./lib/artist')
 require('./lib/song')
 require('pry')
 also_reload('lib/**/*.rb')
@@ -15,7 +16,8 @@ end
 
 get('/') do
   @albums = Album.all
-  erb(:albums)
+  @artists = Artist.all
+  erb(:index)
 end
 
 get ('/albums') do
@@ -29,21 +31,13 @@ get ('/albums') do
   erb(:albums)
 end
 
-get('/albums/new') do
-  erb(:new_album)
-end
-
 get('/albums/:id') do
   @album = Album.find(params[:id].to_i())
   erb(:album)
 end
 
-post('/albums') do
-  name = params[:album_name]
-  album = Album.new(name, nil, nil, nil, nil)
-  album.save()
-  @albums = Album.all() # Adding this line will fix the error.
-  erb(:albums)
+get('/albums/new') do
+  erb(:new_album)
 end
 
 get('/albums/:id/edit') do
@@ -54,9 +48,61 @@ end
 patch('/albums/:id') do
   @album = Album.find(params[:id].to_i())
   values = *params.values
-  @album.update(values[1], values[2], values[3], values[4])
+  @album.update(params)
   @albums = Album.all
   erb(:albums)
+end
+
+post('/albums') do
+  album = Album.new(params)
+  album.save()
+  @albums = Album.all() # Adding this line will fix the error.
+  erb(:albums)
+end
+
+get ('/artists') do
+  if params["search"]
+    @artists = Artist.search(params[:search])
+  elsif params["sort"]
+    @artists = Artist.sort()
+  else
+    @artists = Artist.all
+  end
+  erb(:artists)
+end
+
+get('/artists/new') do
+  erb(:new_artist)
+end
+
+
+get('/artists/:id') do
+  @artist = Artist.find(params[:id].to_i())
+  erb(:artist)
+end
+
+
+post('/artists/:id') do
+  @artist = Artist.find(params[:id].to_i)
+  @artist.update({:album_name => params[:album_name]})
+  erb(:artist)
+end
+
+post('/artists') do
+  puts params
+  artist = Artist.new({:name => params[:artist_name], :id => nil})
+  artist.save()
+  @artists = Artist.all() # Adding this line will fix the error.
+  erb(:artists)
+end
+
+
+patch('/artists/:id') do
+  @artist = Artist.find(params[:id].to_i())
+  values = *params.values
+  @artist.update(params)
+  @artists = Artist.all
+  erb(:artists)
 end
 
 delete('/albums/:id') do
@@ -66,6 +112,12 @@ delete('/albums/:id') do
   erb(:albums)
 end
 
+delete('/artists/:id') do
+  @artist = Artist.find(params[:id].to_i())
+  @artist.delete()
+  @artists = Artist.all
+  erb(:artists)
+end
 get('/custom_route') do
   "We can even create custom routes, but we should only do this when needed."
 end
@@ -79,7 +131,7 @@ end
 # Post a new song. After the song is added, Sinatra will route to the view for the album the song belongs to.
 post('/albums/:id/songs') do
   @album = Album.find(params[:id].to_i())
-  song = Song.new(params[:song_name], @album.id, nil)
+  song = Song.new(:name => params[:song_name], :album_id => @album.id, :id => nil)
   song.save()
   erb(:album)
 end

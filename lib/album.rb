@@ -2,8 +2,8 @@ class Album
   attr_accessor :name, :id
 
   def initialize(attributes) ##CHANGE # We've added id as a second parameter.
-    @name = attributes.fetch(:name)
-    @id = attributes.fetch(:id)
+    @name = attributes.fetch(:name) || nil
+    @id = attributes.fetch(:id, nil)
   end
 
   def self.all
@@ -62,6 +62,10 @@ class Album
     Song.find_by_album(self.id)
   end
 
+  # def artists
+  #   Artist.find_by_album(self.id)
+  # end
+  #
   # def sold()
   #   @@sold_albums[self.id].push(@@albums[self.id] = Album.new(self.name, self.id, self.year, self.genre, self.artist))
   #   @@albums.delete(self.id)
